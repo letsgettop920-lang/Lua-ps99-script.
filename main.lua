@@ -1,47 +1,54 @@
--- // PS99 Ultimate Pro Hub - Verified Working
+-- // PS99 Ultimate Pro Hub - Final Fixed & Clean Edition
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local TeleportService = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Clean up any existing duplicates
+-- Clean up any old existing GUI versions instantly
 if playerGui:FindFirstChild("PS99UltimateProHub") then playerGui.PS99UltimateProHub:Destroy() end
 if CoreGui:FindFirstChild("PS99UltimateProHub") then CoreGui.PS99UltimateProHub:Destroy() end
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PS99UltimateProHub"
 screenGui.ResetOnSpawn = false
-pcall(function() screenGui.Parent = CoreGui end)
-if not screenGui.Parent then screenGui.Parent = playerGui end
+screenGui.IgnoreGuiInset = true
 
--- Main Window Container
+pcall(function()
+	screenGui.Parent = CoreGui
+end)
+if not screenGui.Parent then
+	screenGui.Parent = playerGui
+end
+
+-- Main Window Container (Modern Dark Theme)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.Size = UDim2.new(0, 320, 0, 440)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -220)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.CornerRadius = UDim.new(0, 14)
 mainCorner.Parent = mainFrame
 
 local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(138, 43, 226)
-stroke.Thickness = 1.5
+stroke.Thickness = 2
 stroke.Parent = mainFrame
 
 -- Top Title Bar
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
+title.Size = UDim2.new(1, 0, 0, 50)
 title.BackgroundTransparency = 1
 title.Text = "⚡ PET SIMULATOR 99 // PRO HUB"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -51,11 +58,11 @@ title.Parent = mainFrame
 
 -- Scroll Frame for Clean List Layout
 local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -16, 1, -55)
-scrollFrame.Position = UDim2.new(0, 8, 0, 50)
+scrollFrame.Size = UDim2.new(1, -16, 1, -60)
+scrollFrame.Position = UDim2.new(0, 8, 0, 55)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 340)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
 scrollFrame.ScrollBarThickness = 3
 scrollFrame.Parent = mainFrame
 
@@ -66,19 +73,21 @@ uiList.Parent = scrollFrame
 
 local function createButton(text, color, callback)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -8, 0, 40)
+	btn.Size = UDim2.new(1, -8, 0, 42)
 	btn.BackgroundColor3 = color or Color3.fromRGB(35, 35, 50)
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 12
 	btn.Text = text
+	btn.AutoButtonColor = true
 	btn.Parent = scrollFrame
 	
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = btn
 	
-	-- Multiple connection events to guarantee responsiveness across all executors
+	-- Robust input connections to guarantee click firing across executors
+	btn.MouseButton1Click:Connect(callback)
 	btn.MouseButton1Down:Connect(callback)
 	btn.Activated:Connect(callback)
 	
@@ -148,16 +157,42 @@ brightBtn = createButton("Fullbright: OFF", Color3.fromRGB(45, 45, 65), function
 	Lighting.GlobalShadows = not fullbrightActive
 end)
 
--- 5. RESET CHARACTER
+-- 5. AUTO FISHING / REEL-IN LOOP
+local autoFishActive = false
+local fishBtn
+fishBtn = createButton("Auto Fishing: OFF", Color3.fromRGB(45, 45, 65), function()
+	autoFishActive = not autoFishActive
+	fishBtn.Text = autoFishActive and "Auto Fishing: ON" or "Auto Fishing: OFF"
+	fishBtn.BackgroundColor3 = autoFishActive and Color3.fromRGB(40, 160, 80) or Color3.fromRGB(45, 45, 65)
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.25)
+		if autoFishActive then
+			pcall(function()
+				-- Automatically looks for fishing mini-game remotes or triggers network functions
+				for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
+					if remote:IsA("RemoteEvent") and (remote.Name:lower():find("fish") or remote.Name:lower():find("minigame") or remote.Name:lower():find("rod")) then
+						remote:FireServer("Click")
+						remote:FireServer(true)
+					end
+				end
+			end)
+		end
+	end
+end)
+
+-- 6. RESET CHARACTER
 createButton("Reset Character", Color3.fromRGB(180, 50, 50), function()
 	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
 		player.Character:FindFirstChildOfClass("Humanoid").Health = 0
 	end
 end)
 
--- 6. REJOIN SERVER
+-- 7. REJOIN SERVER
 createButton("Rejoin Server", Color3.fromRGB(100, 50, 180), function()
 	TeleportService:Teleport(game.PlaceId, player)
 end)
 
-print("[PS99 Ultimate Pro Hub]: Successfully Loaded!")
+print("[PS99 Ultimate Pro Hub]: Successfully Loaded with Auto Fishing!")
