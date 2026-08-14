@@ -1,4 +1,4 @@
--- // PS99 Ultimate Pro Hub - Direct Local Execution
+
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
