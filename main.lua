@@ -1,26 +1,30 @@
--- // Pet Simulator 99 (PS99) - Fixed Interactive Hub
+-- // Pet Simulator 99 (PS99) - Bulletproof Interactive Hub
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Prevent multiple GUI instances safely
-if playerGui:FindFirstChild("PS99UltimateHub") then
-	playerGui.PS99UltimateHub:Destroy()
-end
+-- Clean up previous versions
+if playerGui:FindFirstChild("PS99UltimateHub") then playerGui.PS99UltimateHub:Destroy() end
+if CoreGui:FindFirstChild("PS99UltimateHub") then CoreGui.PS99UltimateHub:Destroy() end
 
--- Create ScreenGui inside PlayerGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PS99UltimateHub"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+-- Fallback parent to CoreGui if PlayerGui blocks inputs
+pcall(function()
+	screenGui.Parent = CoreGui
+end)
+if not screenGui.Parent then
+	screenGui.Parent = playerGui
+end
 
--- Main Container Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 280, 0, 440)
 mainFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
@@ -39,17 +43,15 @@ stroke.Color = Color3.fromRGB(120, 80, 250)
 stroke.Thickness = 1.5
 stroke.Parent = mainFrame
 
--- Title Bar
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 45)
 title.BackgroundTransparency = 1
-title.Text = "🐾 PS99 // Fixed Active Hub"
+title.Text = "🐾 PS99 // Bulletproof Hub"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 13
 title.Parent = mainFrame
 
--- Scrolling Frame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -12, 1, -55)
 scrollFrame.Position = UDim2.new(0, 6, 0, 50)
@@ -74,9 +76,9 @@ local function createButton(text, yPos, color, callback)
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = btn
 	
-	-- Connect using both MouseButton1Click and Activated for maximum compatibility across executors
+	-- Multiple triggers to ensure interaction fires immediately
+	btn.MouseButton1Down:Connect(callback)
 	btn.Activated:Connect(callback)
-	btn.MouseButton1Click:Connect(callback)
 	
 	return btn
 end
@@ -191,7 +193,7 @@ player.Idled:Connect(function()
 	VirtualUser:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
 end)
 createButton("Anti-AFK Enabled (Active)", 220, Color3.fromRGB(40, 180, 90), function()
-	print("Anti-AFK is running automatically.")
+	print("Anti-AFK is running.")
 end)
 
 -- 7. RESET CHARACTER
@@ -206,4 +208,4 @@ createButton("Rejoin Server", 308, Color3.fromRGB(100, 50, 180), function()
 	TeleportService:Teleport(game.PlaceId, player)
 end)
 
-print("[PS99 Ultimate Hub]: Fully interactive UI loaded!")
+print("[PS99 Ultimate Hub]: Bulletproof interactive hub loaded successfully!")
